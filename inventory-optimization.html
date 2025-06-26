@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Optimization Algorithm - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #334155;
+        }
+
+        .demo-header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .demo-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .back-btn {
+            background: #6366f1;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #4f46e5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .main-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .optimize-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .optimize-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .panel-content {
+            padding: 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #6366f1;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: #64748b;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-change {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .positive { color: #10b981; }
+        .negative { color: #ef4444; }
+
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .inventory-table th,
+        .inventory-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .inventory-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-optimal { background: #dcfce7; color: #166534; }
+        .status-low { background: #fef3c7; color: #92400e; }
+        .status-critical { background: #fecaca; color: #dc2626; }
+        .status-overstock { background: #dbeafe; color: #1e40af; }
+
+        .recommendation {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .recommendation.reorder {
+            background: #fef3c7;
+            border-color: #fcd34d;
+        }
+
+        .recommendation.reduce {
+            background: #fecaca;
+            border-color: #fca5a5;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .algorithm-status {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .status-title {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .algorithm-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .algorithm-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metric-name {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .metric-val {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .predictions-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .predictions-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+
+        .prediction-item {
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #6366f1;
+        }
+
+        .prediction-product {
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .prediction-details {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .chart-container {
+            height: 300px;
+            background: #f8fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: end;
+            justify-content: space-around;
+            height: 200px;
+            width: 80%;
+        }
+
+        .chart-bar {
+            background: linear-gradient(to top, #6366f1, #8b5cf6);
+            width: 40px;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            animation: growUp 2s ease-out;
+        }
+
+        .chart-bar::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        @keyframes growUp {
+            from { height: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1 class="demo-title">Inventory Optimization Algorithm</h1>
+        <a href="../index.html#projects" class="back-btn">← Back to Portfolio</a>
+    </div>
+
+    <div class="container">
+        <div class="dashboard-grid">
+            <div class="main-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Inventory Dashboard</h2>
+                    <button class="optimize-btn" onclick="runOptimization()">Run Optimization</button>
+                </div>
+                <div class="panel-content">
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">$2.1M</div>
+                            <div class="metric-label">Total Inventory Value</div>
+                            <div class="metric-change positive">↗ +5.2% from last month</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">847</div>
+                            <div class="metric-label">SKUs Tracked</div>
+                            <div class="metric-change positive">↗ +12 new items</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">23</div>
+                            <div class="metric-label">Items Need Reorder</div>
+                            <div class="metric-change negative">↗ +3 from yesterday</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">94.2%</div>
+                            <div class="metric-label">Stock Accuracy</div>
+                            <div class="metric-change positive">↗ +1.8% improvement</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-bars">
+                            <div class="chart-bar" data-value="85%" style="height: 170px;"></div>
+                            <div class="chart-bar" data-value="92%" style="height: 184px;"></div>
+                            <div class="chart-bar" data-value="78%" style="height: 156px;"></div>
+                            <div class="chart-bar" data-value="96%" style="height: 192px;"></div>
+                            <div class="chart-bar" data-value="88%" style="height: 176px;"></div>
+                            <div class="chart-bar" data-value="91%" style="height: 182px;"></div>
+                            <div class="chart-bar" data-value="83%" style="height: 166px;"></div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-bottom: 1rem; color: #1e293b;">Critical Items Requiring Attention</h3>
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Current Stock</th>
+                                <th>Optimal Level</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <tr>
+                                <td>
+                                    <strong>Wireless Headphones Pro</strong>
+                                    <div class="recommendation reorder">
+                                        Reorder 150 units by Friday to avoid stockout
+                                    </div>
+                                </td>
+                                <td>23 units</td>
+                                <td>120-180 units</td>
+                                <td><span class="status-badge status-critical">Critical</span></td>
+                                <td>
+                                    <button class="optimize-btn" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                        Reorder Now
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Bluetooth Speaker Mini</strong>
+                                    <div class="recommendation reorder">
+                                        Reorder 75 units within 2 weeks
+                                    </div>
+                                </td>
+                                <td>45 units</td>
+                                <td>80-120 units</td>
+                                <td><span class="status-badge status-low">Low Stock</span></td>
+                                <td>
+                                    <button class="optimize-btn" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                        Schedule Order
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>USB-C Cable 6ft</strong>
+                                    <div class="recommendation reduce">
+                                        Consider reducing next order by 30%
+                                    </div>
+                                </td>
+                                <td>450 units</td>
+                                <td>200-300 units</td>
+                                <td><span class="status-badge status-overstock">Overstock</span></td>
+                                <td>
+                                    <button class="optimize-btn" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                        Adjust Plan
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Laptop Stand Aluminum</strong>
+                                </td>
+                                <td>95 units</td>
+                                <td>80-120 units</td>
+                                <td><span class="status-badge status-optimal">Optimal</span></td>
+                                <td>
+                                    <span style="color: #64748b; font-size: 0.875rem;">No action needed</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="algorithm-status">
+                    <div class="status-header">
+                        <div class="status-indicator"></div>
+                        <h3 class="status-title">Algorithm Status</h3>
+                    </div>
+                    <div class="algorithm-metrics">
+                        <div class="algorithm-metric">
+                            <span class="metric-name">Last Run</span>
+                            <span class="metric-val">2 hours ago</span>
+                        </div>
+                        <div class="algorithm-metric">
+                            <span class="metric-name">Processing Time</span>
+                            <span class="metric-val">1.2 seconds</span>
+                        </div>
+                        <div class="algorithm-metric">
+                            <span class="metric-name">Accuracy Score</span>
+                            <span class="metric-val">96.8%</span>
+                        </div>
+                        <div class="algorithm-metric">
+                            <span class="metric-name">Data Points</span>
+                            <span class="metric-val">2.4M</span>
+                        </div>
+                        <div class="algorithm-metric">
+                            <span class="metric-name">Model Version</span>
+                            <span class="metric-val">v2.1.3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="predictions-panel">
+                    <h3 class="predictions-title">AI Predictions (Next 30 Days)</h3>
+                    <div class="prediction-item">
+                        <div class="prediction-product">Wireless Headphones Pro</div>
+                        <div class="prediction-details">
+                            Expected demand: 180 units<br>
+                            Confidence: 94%<br>
+                            Seasonal factor: +15%
+                        </div>
+                    </div>
+                    <div class="prediction-item">
+                        <div class="prediction-product">Smartphone Cases</div>
+                        <div class="prediction-details">
+                            Expected demand: 320 units<br>
+                            Confidence: 87%<br>
+                            Trend: Increasing
+                        </div>
+                    </div>
+                    <div class="prediction-item">
+                        <div class="prediction-product">Power Banks</div>
+                        <div class="prediction-details">
+                            Expected demand: 95 units<br>
+                            Confidence: 91%<br>
+                            Seasonal factor: -8%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function runOptimization() {
+            const btn = document.querySelector('.optimize-btn');
+            const originalText = btn.textContent;
+            
+            btn.disabled = true;
+            btn.textContent = 'Optimizing...';
+            btn.style.background = 'rgba(255,255,255,0.1)';
+            
+            // Simulate optimization process
+            setTimeout(() => {
+                // Update metrics with new optimized values
+                updateMetrics();
+                
+                // Show completion message
+                btn.textContent = 'Optimization Complete';
+                btn.style.background = 'rgba(16, 185, 129, 0.3)';
+                
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    btn.style.background = 'rgba(255,255,255,0.2)';
+                }, 2000);
+                
+            }, 3000);
+        }
+        
+        function updateMetrics() {
+            // Simulate updated metrics after optimization
+            const metrics = document.querySelectorAll('.metric-value');
+            const changes = document.querySelectorAll('.metric-change');
+            
+            // Update inventory value
+            metrics[0].textContent = '$2.0M';
+            changes[0].innerHTML = '↘ -4.8% optimized reduction';
+            changes[0].className = 'metric-change positive';
+            
+            // Update reorder items
+            metrics[2].textContent = '18';
+            changes[2].innerHTML = '↘ -5 items optimized';
+            changes[2].className = 'metric-change positive';
+            
+            // Update accuracy
+            metrics[3].textContent = '96.8%';
+            changes[3].innerHTML = '↗ +2.6% improvement';
+            
+            // Update algorithm status
+            document.querySelector('.algorithm-metrics .metric-val').textContent = 'Just now';
+            
+            // Add visual feedback
+            const tableRows = document.querySelectorAll('#inventoryTableBody tr');
+            tableRows.forEach((row, index) => {
+                if (index < 2) { // First two critical items
+                    setTimeout(() => {
+                        row.style.background = '#f0fdf4';
+                        row.style.border = '1px solid #bbf7d0';
+                        row.style.borderRadius = '6px';
+                    }, 1000 + index * 500);
+                }
+            });
+        }
+        
+        // Simulate real-time updates
+        setInterval(() => {
+            const statusIndicator = document.querySelector('.status-indicator');
+            statusIndicator.style.background = statusIndicator.style.background === 'rgb(16, 185, 129)' ? '#f59e0b' : '#10b981';
+        }, 2000);
+        
+        // Add hover effects to table rows
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableRows = document.querySelectorAll('#inventoryTableBody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', () => {
+                    row.style.background = '#f8fafc';
+                });
+                row.addEventListener('mouseleave', () => {
+                    if (!row.style.border.includes('bbf7d0')) {
+                        row.style.background = '';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

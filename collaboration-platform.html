@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Collaboration Platform - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .demo-header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            position: relative;
+        }
+
+        .demo-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .back-btn {
+            background: #6366f1;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #4f46e5;
+        }
+
+        .collaboration-interface {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .project-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+        }
+
+        .project-status {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .online-users {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .users-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .online-indicator {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .user-status {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .chat-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 1.5rem;
+        }
+
+        .chat-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 3px solid #6366f1;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+
+        .message-author {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .message-content {
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .chat-input button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .main-workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toolbar {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .tool-btn {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tool-btn:hover {
+            background: #f8fafc;
+            border-color: #6366f1;
+        }
+
+        .tool-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .canvas-area {
+            flex: 1;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .canvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+            transition: all 0.1s ease;
+        }
+
+        .cursor::after {
+            content: attr(data-user);
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .version-history {
+            width: 250px;
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            padding: 1.5rem;
+        }
+
+        .version-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+
+        .version-item {
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .version-item:hover {
+            border-color: #6366f1;
+            background: #f8fafc;
+        }
+
+        .version-item.current {
+            border-color: #6366f1;
+            background: #eff6ff;
+        }
+
+        .version-title {
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .version-meta {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        @media (max-width: 768px) {
+            .collaboration-interface {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 200px;
+            }
+            
+            .version-history {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1 class="demo-title">Real-time Collaboration Platform</h1>
+        <a href="../index.html#projects" class="back-btn">← Back to Portfolio</a>
+    </div>
+
+    <div class="collaboration-interface">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="project-title">Design System v2.0</div>
+                <div class="project-status">Last updated 5 minutes ago</div>
+            </div>
+
+            <div class="online-users">
+                <div class="users-header">
+                    <span class="online-indicator"></span>
+                    Online Users (4)
+                </div>
+                <div class="user-list">
+                    <div class="user-item">
+                        <div class="user-avatar" style="background: #6366f1;">JS</div>
+                        <div class="user-info">
+                            <div class="user-name">John Smith</div>
+                            <div class="user-status">Editing canvas</div>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-avatar" style="background: #10b981;">SD</div>
+                        <div class="user-info">
+                            <div class="user-name">Sarah Davis</div>
+                            <div class="user-status">Reviewing changes</div>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-avatar" style="background: #f59e0b;">MB</div>
+                        <div class="user-info">
+                            <div class="user-name">Mike Brown</div>
+                            <div class="user-status">Adding comments</div>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-avatar" style="background: #ef4444;">AL</div>
+                        <div class="user-info">
+                            <div class="user-name">Anna Lee</div>
+                            <div class="user-status">You</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-section">
+                <div class="chat-header">Team Chat</div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message">
+                        <div class="message-header">
+                            <span class="message-author">Sarah Davis</span>
+                            <span class="message-time">2 min ago</span>
+                        </div>
+                        <div class="message-content">The new color palette looks great! Should we update the buttons too?</div>
+                    </div>
+                    <div class="message">
+                        <div class="message-header">
+                            <span class="message-author">John Smith</span>
+                            <span class="message-time">1 min ago</span>
+                        </div>
+                        <div class="message-content">Yes, I'm working on that now. Check the top-right section.</div>
+                    </div>
+                    <div class="message">
+                        <div class="message-header">
+                            <span class="message-author">Mike Brown</span>
+                            <span class="message-time">30 sec ago</span>
+                        </div>
+                        <div class="message-content">Added some feedback comments. Let me know what you think!</div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Type a message...">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-workspace">
+            <div class="toolbar">
+                <div class="tool-group">
+                    <button class="tool-btn active" title="Select">
+                        <i class="fas fa-mouse-pointer"></i>
+                    </button>
+                    <button class="tool-btn" title="Rectangle">
+                        <i class="fas fa-square"></i>
+                    </button>
+                    <button class="tool-btn" title="Circle">
+                        <i class="fas fa-circle"></i>
+                    </button>
+                    <button class="tool-btn" title="Text">
+                        <i class="fas fa-font"></i>
+                    </button>
+                </div>
+                <div class="tool-group">
+                    <button class="tool-btn" title="Pen">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button class="tool-btn" title="Eraser">
+                        <i class="fas fa-eraser"></i>
+                    </button>
+                </div>
+                <div class="tool-group">
+                    <button class="tool-btn" title="Zoom In">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="tool-btn" title="Zoom Out">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                </div>
+                <div class="tool-group">
+                    <button class="tool-btn" title="Comment">
+                        <i class="fas fa-comment"></i>
+                    </button>
+                    <button class="tool-btn" title="Share">
+                        <i class="fas fa-share"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="canvas-area" id="canvasArea">
+                <canvas id="collaborationCanvas" class="canvas"></canvas>
+                <!-- Simulated user cursors -->
+                <div class="cursor" data-user="John" style="background: #6366f1; top: 150px; left: 200px;"></div>
+                <div class="cursor" data-user="Sarah" style="background: #10b981; top: 300px; left: 400px;"></div>
+                <div class="cursor" data-user="Mike" style="background: #f59e0b; top: 250px; left: 600px;"></div>
+            </div>
+        </div>
+
+        <div class="version-history">
+            <div class="version-header">Version History</div>
+            <div class="version-item current">
+                <div class="version-title">Current Version</div>
+                <div class="version-meta">Auto-saved • Just now</div>
+            </div>
+            <div class="version-item">
+                <div class="version-title">Color Updates</div>
+                <div class="version-meta">John Smith • 5 min ago</div>
+            </div>
+            <div class="version-item">
+                <div class="version-title">Layout Refinements</div>
+                <div class="version-meta">Sarah Davis • 15 min ago</div>
+            </div>
+            <div class="version-item">
+                <div class="version-title">Initial Design</div>
+                <div class="version-meta">Mike Brown • 1 hour ago</div>
+            </div>
+            <div class="version-item">
+                <div class="version-title">Project Setup</div>
+                <div class="version-meta">Anna Lee • 2 hours ago</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize canvas
+        const canvas = document.getElementById('collaborationCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            drawSampleContent();
+        }
+
+        function drawSampleContent() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw sample design elements
+            ctx.fillStyle = '#6366f1';
+            ctx.fillRect(50, 50, 200, 100);
+            
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.arc(400, 150, 50, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(300, 250, 150, 80);
+            
+            // Draw text
+            ctx.fillStyle = '#1e293b';
+            ctx.font = '24px Inter';
+            ctx.fillText('Design System Components', 50, 200);
+            
+            ctx.font = '16px Inter';
+            ctx.fillText('Button Component', 60, 130);
+            ctx.fillText('Icon Set', 380, 130);
+            ctx.fillText('Card Layout', 310, 290);
+        }
+
+        // Animate cursors
+        function animateCursors() {
+            const cursors = document.querySelectorAll('.cursor');
+            cursors.forEach(cursor => {
+                setInterval(() => {
+                    const x = Math.random() * (canvas.offsetWidth - 100) + 50;
+                    const y = Math.random() * (canvas.offsetHeight - 100) + 50;
+                    cursor.style.left = x + 'px';
+                    cursor.style.top = y + 'px';
+                }, 3000 + Math.random() * 2000);
+            });
+        }
+
+        // Chat functionality
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                const chatMessages = document.getElementById('chatMessages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-author">Anna Lee</span>
+                        <span class="message-time">Just now</span>
+                    </div>
+                    <div class="message-content">${message}</div>
+                `;
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                input.value = '';
+                
+                // Simulate response
+                setTimeout(() => {
+                    const responses = [
+                        "Great idea! Let's implement that.",
+                        "I agree, that would improve the design.",
+                        "Thanks for the feedback!",
+                        "Let me work on that section.",
+                        "Perfect! That's exactly what we needed."
+                    ];
+                    
+                    const responseDiv = document.createElement('div');
+                    responseDiv.className = 'message';
+                    responseDiv.innerHTML = `
+                        <div class="message-header">
+                            <span class="message-author">John Smith</span>
+                            <span class="message-time">Just now</span>
+                        </div>
+                        <div class="message-content">${responses[Math.floor(Math.random() * responses.length)]}</div>
+                    `;
+                    
+                    chatMessages.appendChild(responseDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 1000 + Math.random() * 2000);
+            }
+        }
+
+        // Tool selection
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Enter key for chat
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            resizeCanvas();
+            animateCursors();
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+    </script>
+</body>
+</html>
